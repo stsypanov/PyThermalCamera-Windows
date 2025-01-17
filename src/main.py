@@ -152,52 +152,43 @@ def main():
                 bgr = cv2.blur(bgr,(rad,rad))
 
             # Apply colormap
-            match colormap:
+            heatmap = bgr
+            cmapText = ""
+            match Colormap(colormap):
                 case Colormap.JET:
                     heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_JET)
                     cmapText = 'Jet'
-                    break
                 case Colormap.HOT:
                     heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_HOT)
                     cmapText = 'Hot'
-                    break
                 case Colormap.MAGMA:
                     heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_MAGMA)
                     cmapText = 'Magma'
-                    break
                 case Colormap.INFERNO:
                     heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_INFERNO)
                     cmapText = 'Inferno'
-                    break
                 case Colormap.PLASMA:
                     heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_PLASMA)
                     cmapText = 'Plasma'
-                    break
                 case Colormap.BONE:
                     heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_BONE)
                     cmapText = 'Bone'
-                    break
-                case Colormap.SPRING
+                case Colormap.SPRING:
                     heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_SPRING)
                     cmapText = 'Spring'
-                    break
                 case Colormap.AUTUMN:
                     heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_AUTUMN)
                     cmapText = 'Autumn'
-                    break
                 case Colormap.VIRIDIS:
                     heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_VIRIDIS)
                     cmapText = 'Viridis'
-                    break
                 case Colormap.PARULA:
                     heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_PARULA)
                     cmapText = 'Parula'
-                    break
                 case Colormap.INV_RAINBOW:
                     heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_RAINBOW)
                     heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
                     cmapText = 'Inv Rainbow'
-                    break
 
             # Draw crosshairs
             cv2.line(heatmap,(int(newWidth/2),int(newHeight/2)+20),\
