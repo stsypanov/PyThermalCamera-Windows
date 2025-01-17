@@ -7,7 +7,7 @@ Forked by Riley Meyerkorth on 17 January 2025 to modernize and clean up the prog
 '''
 
 import argparse
-from controller import Controller
+from thermalcameracontroller import ThermalCameraController
 
 # Initialize argument parsing
 parser = argparse.ArgumentParser()
@@ -22,7 +22,8 @@ def main():
         dev = 0
         
     # Initialize the controller
-    c = Controller()
+    c = ThermalCameraController(
+        deviceIndex=1)
     
     # Print the credits and bindings
     c.printCredits()
