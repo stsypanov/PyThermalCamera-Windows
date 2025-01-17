@@ -3,26 +3,51 @@
 Les Wright 21 June 2023
 https://youtube.com/leslaboratory
 A Python program to read, parse and display thermal data from the Topdon TC001 Thermal camera!
+
+Forked by Riley Meyerkorth on 17 January 2025 to modernize and clean up the program for Windows and the TS001.
 '''
-print('Les Wright 21 June 2023')
-print('https://youtube.com/leslaboratory')
-print('A Python program to read, parse and display thermal data from the Topdon TC001 Thermal camera!')
-print('')
-print('Tested on Debian all features are working correctly')
-print('This will work on the Pi However a number of workarounds are implemented!')
-print('Seemingly there are bugs in the compiled version of cv2 that ships with the Pi!')
-print('')
-print('Key Bindings:')
-print('')
-print('a z: Increase/Decrease Blur')
-print('s x: Floating High and Low Temp Label Threshold')
-print('d c: Change Interpolated scale Note: This will not change the window size on the Pi')
-print('f v: Contrast')
-print('q w: Fullscreen Windowed (note going back to windowed does not seem to work on the Pi!)')
-print('r t: Record and Stop')
-print('p : Snapshot')
-print('m : Cycle through ColorMaps')
-print('h : Toggle HUD')
+KEY_INCREASE_BLUR = 'a'
+KEY_DECREASE_BLUR = 'z'
+KEY_INCREASE_FLOATING_HIGH_LOW_TEMP_LABEL_THRESHOLD = 's'
+KEY_DECREASE_FLOATING_HIGH_LOW_TEMP_LABEL_THRESHOLD = 'x'
+KEY_INCREASE_SCALE = 'd'
+KEY_DECREASE_SCALE = 'c'
+KEY_INCREASE_CONTRAST = 'f'
+KEY_DECREASE_CONTRAST = 'v'
+KEY_FULLSCREEN = 'q'
+KEY_WINDOWED = 'w'
+KEY_RECORD = 'r'
+KEY_STOP = 't'
+KEY_SNAPSHOT = 'p'
+KEY_CYCLE_THROUGH_COLORMAPS = 'm'
+KEY_TOGGLE_HUD = 'h'
+
+def printBindings():
+    """
+    Print key bindings for the program.
+    """
+    print('Key Bindings:\n')
+    print(f'{KEY_INCREASE_BLUR} {KEY_DECREASE_BLUR}: Increase/Decrease Blur')
+    print(f'{KEY_INCREASE_FLOATING_HIGH_LOW_TEMP_LABEL_THRESHOLD} {KEY_DECREASE_FLOATING_HIGH_LOW_TEMP_LABEL_THRESHOLD}: Floating High and Low Temp Label Threshold')
+    print(f'{KEY_INCREASE_SCALE} {KEY_DECREASE_SCALE}: Change Interpolated scale Note: This will not change the window size on the Pi')
+    print(f'{KEY_INCREASE_CONTRAST} {KEY_DECREASE_CONTRAST}: Contrast')
+    print(f'{KEY_FULLSCREEN} {KEY_WINDOWED}: Fullscreen Windowed (note going back to windowed does not seem to work on the Pi!)')
+    print(f'{KEY_RECORD} {KEY_STOP}: Record and Stop')
+    print(f'{KEY_SNAPSHOT} : Snapshot')
+    print(f'{KEY_CYCLE_THROUGH_COLORMAPS} : Cycle through ColorMaps')
+    print(f'{KEY_TOGGLE_HUD} : Toggle HUD')
+ 
+def printCredits():
+    """
+    Print credits/author(s) for the program.
+    """
+    print('Original Author: Les Wright 21 June 2023')
+    print('https://youtube.com/leslaboratory')
+    print('Fork Author: Riley Meyerkorth 17 January 2025')
+    print('A Python program to read, parse and display thermal data from the Topdon TC001 and TS001 Thermal cameras!\n')
+    
+printCredits()
+printBindings()
 
 import cv2
 import numpy as np
