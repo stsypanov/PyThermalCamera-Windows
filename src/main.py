@@ -44,7 +44,7 @@ printBindings()
 
 # Initialize argument parsing
 parser = argparse.ArgumentParser()
-parser.add_argument("--device", type=int, default=0, help=f"VideoDevice index. Currently selectable: {getDevices()}")
+parser.add_argument("--device", type=int, default=0, help=f"VideoDevice index. Default is 0.")
 args = parser.parse_args()
 
 def main():
@@ -55,7 +55,7 @@ def main():
         dev = 0
         
     # Initialize video
-    cap = cv2.VideoCapture(dev)
+    cap = cv2.VideoCapture(1)
 
     """
     MAJOR CHANGE: Do NOT convert to RGB. For some reason, this breaks the frame temperature data on TS001.
