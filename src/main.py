@@ -54,6 +54,7 @@ import argparse
 import time
 
 from deviceHelper import getDevices
+from enums.ColormapEnum import Colormap
 
 # Initialize argument parsing
 parser = argparse.ArgumentParser()
@@ -167,41 +168,53 @@ def main():
             if rad>0:
                 bgr = cv2.blur(bgr,(rad,rad))
 
-            #apply colormap
-            if colormap == 0:
-                heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_JET)
-                cmapText = 'Jet'
-            if colormap == 1:
-                heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_HOT)
-                cmapText = 'Hot'
-            if colormap == 2:
-                heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_MAGMA)
-                cmapText = 'Magma'
-            if colormap == 3:
-                heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_INFERNO)
-                cmapText = 'Inferno'
-            if colormap == 4:
-                heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_PLASMA)
-                cmapText = 'Plasma'
-            if colormap == 5:
-                heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_BONE)
-                cmapText = 'Bone'
-            if colormap == 6:
-                heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_SPRING)
-                cmapText = 'Spring'
-            if colormap == 7:
-                heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_AUTUMN)
-                cmapText = 'Autumn'
-            if colormap == 8:
-                heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_VIRIDIS)
-                cmapText = 'Viridis'
-            if colormap == 9:
-                heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_PARULA)
-                cmapText = 'Parula'
-            if colormap == 10:
-                heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_RAINBOW)
-                heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
-                cmapText = 'Inv Rainbow'
+            # Apply colormap
+            match colormap:
+                case Colormap.JET:
+                    heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_JET)
+                    cmapText = 'Jet'
+                    break
+                case Colormap.HOT:
+                    heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_HOT)
+                    cmapText = 'Hot'
+                    break
+                case Colormap.MAGMA:
+                    heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_MAGMA)
+                    cmapText = 'Magma'
+                    break
+                case Colormap.INFERNO:
+                    heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_INFERNO)
+                    cmapText = 'Inferno'
+                    break
+                case Colormap.PLASMA:
+                    heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_PLASMA)
+                    cmapText = 'Plasma'
+                    break
+                case Colormap.BONE:
+                    heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_BONE)
+                    cmapText = 'Bone'
+                    break
+                case Colormap.SPRING
+                    heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_SPRING)
+                    cmapText = 'Spring'
+                    break
+                case Colormap.AUTUMN:
+                    heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_AUTUMN)
+                    cmapText = 'Autumn'
+                    break
+                case Colormap.VIRIDIS:
+                    heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_VIRIDIS)
+                    cmapText = 'Viridis'
+                    break
+                case Colormap.PARULA:
+                    heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_PARULA)
+                    cmapText = 'Parula'
+                    break
+                case Colormap.INV_RAINBOW:
+                    heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_RAINBOW)
+                    heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
+                    cmapText = 'Inv Rainbow'
+                    break
 
             #print(heatmap.shape)
 
