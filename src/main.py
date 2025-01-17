@@ -69,18 +69,19 @@ def main():
     else:
         dev = 0
         
-    #init video
-    #cap = cv2.VideoCapture('/dev/video'+str(dev), cv2.CAP_V4L)
+    # Initialize video
     cap = cv2.VideoCapture(dev)
 
-    #pull in the video but do NOT automatically convert to RGB, else it breaks the temperature data!
-    #https://stackoverflow.com/questions/63108721/opencv-setting-videocap-property-to-cap-prop-convert-rgb-generates-weird-boolean
-    cap.set(cv2.CAP_PROP_CONVERT_RGB, 0) # MAJOR CHANGE: Do NOT convert to RGB. For some reason, this breaks the frame temperature data on TS001.
-
-    #256x192 General settings
-    width = 256 #Sensor width
-    height = 192 #sensor height
-    scale = 3 #scale multiplier
+    """
+    MAJOR CHANGE: Do NOT convert to RGB. For some reason, this breaks the frame temperature data on TS001.
+    Originally, it was apparently the opposite: https://stackoverflow.com/questions/63108721/opencv-setting-videocap-property-to-cap-prop-convert-rgb-generates-weird-boolean
+    """
+    #cap.set(cv2.CAP_PROP_CONVERT_RGB, 0)
+    
+    # Initialize the settings
+    width = 256 # Sensor width
+    height = 192 # Sensor height
+    scale = 3 # Scale multiplier
     newWidth = width*scale 
     newHeight = height*scale
     alpha = 1.0 # Contrast control (1.0-3.0)
@@ -115,25 +116,22 @@ def main():
         print("frame shape:", frame.shape if frame is not None else "None")
         if ret == True:
             imdata,thdata = np.array_split(frame, 2)
-            #now parse the data from the bottom frame and convert to temp!
-            #https://www.eevblog.com/forum/thermal-imaging/infiray-and-their-p2-pro-discussion/200/
-            #Huge props to LeoDJ for figuring out how the data is stored and how to compute temp from it.
-            #grab data from the center pixel...
+            # Now parse the data from the bottom frame and convert to temp!
+            # https://www.eevblog.com/forum/thermal-imaging/infiray-and-their-p2-pro-discussion/200/
+            # Huge props to LeoDJ for figuring out how the data is stored and how to compute temp from it.
+            # Grab data from the center pixel...
             hi = int(thdata[96][128][0])
             lo = int(thdata[96][128][1])
             print(hi,lo)
             lo = lo*256
             rawtemp = hi+lo
-            #print(rawtemp)
             temp = (rawtemp/64)-273.15
             temp = round(temp,2)
-            #print(temp)
-            #break
 
-            #find the max temperature in the frame
+            # Find the max temperature in the frame
             lomax = int(thdata[...,1].max())
             posmax = int(thdata[...,1].argmax())
-            #since argmax returns a linear index, convert back to row and col
+            # Since argmax returns a linear index, convert back to row and col
             mcol,mrow = divmod(posmax,width)
             himax = int(thdata[mcol][mrow][0])
             lomax=lomax*256
@@ -142,10 +140,11 @@ def main():
             maxtemp = round(maxtemp,2)
 
             
-            #find the lowest temperature in the frame
+            # Find the lowest temperature in the frame
             lomin = int(thdata[...,1].min())
             posmin = int(thdata[...,1].argmin())
-            #since argmax returns a linear index, convert back to row and col
+            
+            # Since argmax returns a linear index, convert back to row and col
             lcol,lrow = divmod(posmin,width)
             himin = int(thdata[lcol][lrow][0])
             lomin=lomin*256
@@ -153,7 +152,7 @@ def main():
             mintemp = (mintemp/64)-273.15
             mintemp = round(mintemp,2)
 
-            #find the average temperature in the frame
+            # Find the average temperature in the frame
             loavg = int(thdata[...,1].mean())
             hiavg = int(thdata[...,0].mean())
             loavg=loavg*256
@@ -162,9 +161,9 @@ def main():
             avgtemp = round(avgtemp,2)
 
             
-            #Contrast
+            # Contrast
             bgr = cv2.convertScaleAbs(imdata, alpha=alpha)#Contrast
-            #bicubic interpolate, upscale and blur
+            # Bicubic interpolate, upscale and blur
             bgr = cv2.resize(bgr,(newWidth,newHeight),interpolation=cv2.INTER_CUBIC)#Scale up!
             if rad>0:
                 bgr = cv2.blur(bgr,(rad,rad))
@@ -217,9 +216,7 @@ def main():
                     cmapText = 'Inv Rainbow'
                     break
 
-            #print(heatmap.shape)
-
-            # draw crosshairs
+            # Draw crosshairs
             cv2.line(heatmap,(int(newWidth/2),int(newHeight/2)+20),\
             (int(newWidth/2),int(newHeight/2)-20),(255,255,255),2) #vline
             cv2.line(heatmap,(int(newWidth/2)+20,int(newHeight/2)),\
@@ -229,16 +226,18 @@ def main():
             (int(newWidth/2),int(newHeight/2)-20),(0,0,0),1) #vline
             cv2.line(heatmap,(int(newWidth/2)+20,int(newHeight/2)),\
             (int(newWidth/2)-20,int(newHeight/2)),(0,0,0),1) #hline
-            #show temp
+            
+            # Show temp
             cv2.putText(heatmap,str(temp)+' C', (int(newWidth/2)+10, int(newHeight/2)-10),\
             cv2.FONT_HERSHEY_SIMPLEX, 0.45,(0, 0, 0), 2, cv2.LINE_AA)
             cv2.putText(heatmap,str(temp)+' C', (int(newWidth/2)+10, int(newHeight/2)-10),\
             cv2.FONT_HERSHEY_SIMPLEX, 0.45,(0, 255, 255), 1, cv2.LINE_AA)
 
             if hud==True:
-                # display black box for our data
+                # Display black box for our data
                 cv2.rectangle(heatmap, (0, 0),(160, 120), (0,0,0), -1)
-                # put text in the box
+                
+                # Put text in the box
                 cv2.putText(heatmap,'Avg Temp: '+str(avgtemp)+' C', (10, 14),\
                 cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0, 255, 255), 1, cv2.LINE_AA)
 
@@ -257,7 +256,6 @@ def main():
                 cv2.putText(heatmap,'Contrast: '+str(alpha)+' ', (10, 84),\
                 cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0, 255, 255), 1, cv2.LINE_AA)
 
-
                 cv2.putText(heatmap,'Snapshot: '+snaptime+' ', (10, 98),\
                 cv2.FONT_HERSHEY_SIMPLEX, 0.4,(0, 255, 255), 1, cv2.LINE_AA)
 
@@ -269,7 +267,7 @@ def main():
                     cv2.FONT_HERSHEY_SIMPLEX, 0.4,(40, 40, 255), 1, cv2.LINE_AA)
             
             #Yeah, this looks like we can probably do this next bit more efficiently!
-            #display floating max temp
+            # Display floating max temp
             if maxtemp > avgtemp+threshold:
                 cv2.circle(heatmap, (mrow*scale, mcol*scale), 5, (0,0,0), 2)
                 cv2.circle(heatmap, (mrow*scale, mcol*scale), 5, (0,0,255), -1)
@@ -278,7 +276,7 @@ def main():
                 cv2.putText(heatmap,str(maxtemp)+' C', ((mrow*scale)+10, (mcol*scale)+5),\
                 cv2.FONT_HERSHEY_SIMPLEX, 0.45,(0, 255, 255), 1, cv2.LINE_AA)
 
-            #display floating min temp
+            # Display floating min temp
             if mintemp < avgtemp-threshold:
                 cv2.circle(heatmap, (lrow*scale, lcol*scale), 5, (0,0,0), 2)
                 cv2.circle(heatmap, (lrow*scale, lcol*scale), 5, (255,0,0), -1)
@@ -287,13 +285,12 @@ def main():
                 cv2.putText(heatmap,str(mintemp)+' C', ((lrow*scale)+10, (lcol*scale)+5),\
                 cv2.FONT_HERSHEY_SIMPLEX, 0.45,(0, 255, 255), 1, cv2.LINE_AA)
 
-            #display image
+            # Display image
             cv2.imshow('Thermal',heatmap)
 
             if recording == True:
                 elapsed = (time.time() - start)
                 elapsed = time.strftime("%H:%M:%S", time.gmtime(elapsed)) 
-                #print(elapsed)
                 videoOut.write(heatmap)
             
             keyPress = cv2.waitKey(1)
