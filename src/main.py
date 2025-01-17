@@ -13,13 +13,14 @@ KEY_INCREASE_SCALE = 'd'
 KEY_DECREASE_SCALE = 'c'
 KEY_INCREASE_CONTRAST = 'f'
 KEY_DECREASE_CONTRAST = 'v'
-KEY_FULLSCREEN = 'q'
+KEY_FULLSCREEN = 'e'
 KEY_WINDOWED = 'w'
 KEY_RECORD = 'r'
 KEY_STOP = 't'
 KEY_SNAPSHOT = 'p'
 KEY_CYCLE_THROUGH_COLORMAPS = 'm'
 KEY_TOGGLE_HUD = 'h'
+KEY_QUIT = 'q'
 
 def printBindings():
     """
@@ -296,82 +297,83 @@ def main():
                 videoOut.write(heatmap)
             
             keyPress = cv2.waitKey(1)
-            if keyPress == ord('a'): #Increase blur radius
+            if keyPress == ord(KEY_INCREASE_BLUR): # Increase blur radius
                 rad += 1
-            if keyPress == ord('z'): #Decrease blur radius
+            if keyPress == ord(KEY_DECREASE_BLUR): # Decrease blur radius
                 rad -= 1
                 if rad <= 0:
                     rad = 0
 
-            if keyPress == ord('s'): #Increase threshold
+            if keyPress == ord(KEY_INCREASE_FLOATING_HIGH_LOW_TEMP_LABEL_THRESHOLD): # Increase threshold
                 threshold += 1
-            if keyPress == ord('x'): #Decrease threashold
+            if keyPress == ord(KEY_DECREASE_FLOATING_HIGH_LOW_TEMP_LABEL_THRESHOLD): # Decrease threashold
                 threshold -= 1
                 if threshold <= 0:
                     threshold = 0
 
-            if keyPress == ord('d'): #Increase scale
+            if keyPress == ord(KEY_INCREASE_SCALE): # Increase scale
                 scale += 1
                 if scale >=5:
                     scale = 5
                 newWidth = width*scale
                 newHeight = height*scale
-                if dispFullscreen == False and isPi == False:
+                if dispFullscreen == False:
                     cv2.resizeWindow('Thermal', newWidth,newHeight)
-            if keyPress == ord('c'): #Decrease scale
+            if keyPress == ord(KEY_DECREASE_SCALE): # Decrease scale
                 scale -= 1
                 if scale <= 1:
                     scale = 1
                 newWidth = width*scale
                 newHeight = height*scale
-                if dispFullscreen == False and isPi == False:
+                if dispFullscreen == False:
                     cv2.resizeWindow('Thermal', newWidth,newHeight)
 
-            if keyPress == ord('q'): #enable fullscreen
+            if keyPress == ord(KEY_FULLSCREEN): # Enable fullscreen
                 dispFullscreen = True
                 cv2.namedWindow('Thermal',cv2.WND_PROP_FULLSCREEN)
                 cv2.setWindowProperty('Thermal',cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
-            if keyPress == ord('w'): #disable fullscreen
+            if keyPress == ord(KEY_WINDOWED): # Disable fullscreen
                 dispFullscreen = False
                 cv2.namedWindow('Thermal',cv2.WINDOW_GUI_NORMAL)
                 cv2.setWindowProperty('Thermal',cv2.WND_PROP_AUTOSIZE,cv2.WINDOW_GUI_NORMAL)
                 cv2.resizeWindow('Thermal', newWidth,newHeight)
 
-            if keyPress == ord('f'): #contrast+
+            if keyPress == ord(KEY_INCREASE_CONTRAST): # Increase contrast
                 alpha += 0.1
-                alpha = round(alpha,1)#fix round error
+                alpha = round(alpha,1) #fix round error
                 if alpha >= 3.0:
                     alpha=3.0
-            if keyPress == ord('v'): #contrast-
+            if keyPress == ord(KEY_DECREASE_CONTRAST): # Decrease contrast
                 alpha -= 0.1
                 alpha = round(alpha,1)#fix round error
                 if alpha<=0:
                     alpha = 0.0
 
 
-            if keyPress == ord('h'):
+            if keyPress == ord(KEY_TOGGLE_HUD): # Toggle HUD
                 if hud==True:
                     hud=False
                 elif hud==False:
                     hud=True
 
-            if keyPress == ord('m'): #m to cycle through color maps
+            if keyPress == ord(KEY_CYCLE_THROUGH_COLORMAPS): # Cycle through color maps
                 colormap += 1
                 if colormap == 11:
                     colormap = 0
 
-            if keyPress == ord('r') and recording == False: #r to start reording
+            if keyPress == ord(KEY_RECORD) and recording == False: # Start reording
                 videoOut = rec()
                 recording = True
                 start = time.time()
-            if keyPress == ord('t'): #f to finish reording
+                
+            if keyPress == ord(KEY_STOP): # Stop reording
                 recording = False
                 elapsed = "00:00:00"
 
-            if keyPress == ord('p'): #f to finish reording
+            if keyPress == ord(KEY_SNAPSHOT): # Take a snapshot
                 snaptime = snapshot(heatmap)
 
-            if keyPress == ord('q'):
+            if keyPress == ord(KEY_QUIT):
                 break
                 capture.release()
                 cv2.destroyAllWindows()
