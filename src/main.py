@@ -5,22 +5,14 @@ A Python program to read, parse and display thermal data from the Topdon TC001 T
 
 Forked by Riley Meyerkorth on 17 January 2025 to modernize and clean up the program for Windows and the TS001.
 '''
-KEY_INCREASE_BLUR = 'a'
-KEY_DECREASE_BLUR = 'z'
-KEY_INCREASE_FLOATING_HIGH_LOW_TEMP_LABEL_THRESHOLD = 's'
-KEY_DECREASE_FLOATING_HIGH_LOW_TEMP_LABEL_THRESHOLD = 'x'
-KEY_INCREASE_SCALE = 'd'
-KEY_DECREASE_SCALE = 'c'
-KEY_INCREASE_CONTRAST = 'f'
-KEY_DECREASE_CONTRAST = 'v'
-KEY_FULLSCREEN = 'e'
-KEY_WINDOWED = 'w'
-KEY_RECORD = 'r'
-KEY_STOP = 't'
-KEY_SNAPSHOT = 'p'
-KEY_CYCLE_THROUGH_COLORMAPS = 'm'
-KEY_TOGGLE_HUD = 'h'
-KEY_QUIT = 'q'
+
+import cv2
+import numpy as np
+import argparse
+import time
+
+from enums.ColormapEnum import Colormap
+from keybinds import *
 
 def printBindings():
     """
@@ -45,17 +37,10 @@ def printCredits():
     print('https://youtube.com/leslaboratory')
     print('Fork Author: Riley Meyerkorth 17 January 2025')
     print('A Python program to read, parse and display thermal data from the Topdon TC001 and TS001 Thermal cameras!\n')
-    
+
+# Startup print
 printCredits()
 printBindings()
-
-import cv2
-import numpy as np
-import argparse
-import time
-
-from deviceHelper import getDevices
-from enums.ColormapEnum import Colormap
 
 # Initialize argument parsing
 parser = argparse.ArgumentParser()
@@ -113,7 +98,6 @@ def main():
     while(cap.isOpened()):
         # Capture frame-by-frame
         ret, frame = cap.read()
-        print("frame shape:", frame.shape if frame is not None else "None")
         if ret == True:
             imdata,thdata = np.array_split(frame, 2)
             # Now parse the data from the bottom frame and convert to temp!
@@ -122,7 +106,6 @@ def main():
             # Grab data from the center pixel...
             hi = int(thdata[96][128][0])
             lo = int(thdata[96][128][1])
-            print(hi,lo)
             lo = lo*256
             rawtemp = hi+lo
             temp = (rawtemp/64)-273.15
