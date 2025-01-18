@@ -169,6 +169,8 @@ class ThermalCameraController:
         self._font, 0.45,(0,0,0), 2, cv2.LINE_AA)
         cv2.putText(heatmap,str(self._minTemp)+' C', ((self._lrow*self._scale)+10, (self._lcol*self._scale)+5),\
         self._font, 0.45,(0, 255, 255), 1, cv2.LINE_AA)
+
+        return heatmap
     
     def _checkForKeyPress(self, keyPress: int, heatmap):
         ### BLUR RADIUS
