@@ -6,32 +6,32 @@ from keybinds import *
 
 class ThermalCameraController:
     def __init__(self, deviceIndex: int = 0, width: int = 256, height: int = 192, scale: int = 3, contrast: float = 1.0, colormap: Colormap = Colormap.NONE, blurRadius: int = 0, threshold: int = 2, isHudVisible: bool = True):
-        # Parameters
-        self._deviceIndex = deviceIndex
-        self._width = width
-        self._height = height
-        self._scale = scale
-        self._contrast = contrast
-        self._colormap = colormap
-        self._blurRadius = blurRadius
-        self._threshold = threshold
-        self._isHudVisible = isHudVisible
+        # Parameters init
+        self._deviceIndex: int = deviceIndex
+        self._width: int = width
+        self._height: int = height
+        self._scale: int = scale
+        self._contrast: float = contrast
+        self._colormap: Colormap = colormap
+        self._blurRadius: float = blurRadius
+        self._threshold: int = threshold
+        self._isHudVisible: bool = isHudVisible
 
-        # 
+        # Calculated values init
+        self._scaledWidth: int = self._width * self._scale
+        self._scaledHeight: int = self._height * self._scale
         self._rawTemp = 0
         self._temp = 0
-        self._mcol = 0
-        self._mrow = 0
-        self._lcol = 0
-        self._lrow = 0
+        self._mcol: int = 0
+        self._mrow: int = 0
+        self._lcol: int = 0
+        self._lrow: int = 0
         self._maxTemp = 0
         self._minTemp = 0
         self._avgTemp = 0
 
-        
-        # Other
-        self._scaledWidth = self._width * self._scale
-        self._scaledHeight = self._height * self._scale
+        # Other init
+        self._windowTitle = "Thermal"
         self._font = cv2.FONT_HERSHEY_SIMPLEX
         self._isRecording = False
         self._isFullscreen = False
@@ -68,8 +68,31 @@ class ThermalCameraController:
         print('Fork Author: Riley Meyerkorth 17 January 2025')
         print('A Python program to read, parse and display thermal data from the Topdon TC001 and TS001 Thermal cameras!\n')
 
-    def _drawGUI(self, heatmap):
+    def _drawGUI(self, imdata):
+        # Apply affects
+        heatmap = self._applyEffects(imdata=imdata)
+
+        # Apply colormap
+        heatmap = self._applyColormap(heatmap=heatmap)
+
+        # Draw crosshairs
+        heatmap = self._drawCrosshairs(heatmap)
         
+        # Draw temp
+        heatmap = self._drawTemp(heatmap, temp=self._temp)
+
+        # Draw HUD
+        if self._isHudVisible == True:
+            heatmap = self._drawHUD(heatmap=heatmap)
+        
+        # Display floating max temp
+        if self._maxTemp > self._avgTemp + self._threshold:
+            heatmap = self._drawMaxTemp(heatmap)
+
+        # Display floating min temp
+        if self._minTemp < self._avgTemp - self._threshold:
+            heatmap = self._drawMinTemp(heatmap)
+
         return heatmap
 
     def _drawTemp(self, heatmap, temp):
@@ -296,6 +319,9 @@ class ThermalCameraController:
         cv2.imwrite("TC001"+now+".png", heatmap)
         return self._snaptime
 
+    def _convertTemperature(self, rawTemp: float, d: int = 64, c: float = 273.15) -> float:
+        return (rawTemp/d) - c
+
     def run(self):
         # Initialize video
         self._cap = cv2.VideoCapture(self._deviceIndex)
@@ -307,8 +333,8 @@ class ThermalCameraController:
         #cap.set(cv2.CAP_PROP_CONVERT_RGB, 0)
         
         # Initialize the GUI
-        cv2.namedWindow('Thermal',cv2.WINDOW_GUI_NORMAL)
-        cv2.resizeWindow('Thermal', self._scaledWidth, self._scaledHeight)
+        cv2.namedWindow(self._windowTitle,cv2.WINDOW_GUI_NORMAL)
+        cv2.resizeWindow(self._windowTitle, self._scaledWidth, self._scaledHeight)
 
         while(self._cap.isOpened()):
             # Capture frame-by-frame
@@ -323,22 +349,20 @@ class ThermalCameraController:
                 lo = int(thdata[96][128][1])
                 lo = lo*256
                 self._rawTemp = hi+lo
-                self._temp = (self._rawTemp/64)-273.15
-                self._temp = round(self._temp,2)
+                self._temp = round(self._convertTemperature(self._rawTemp), 2)
 
                 # Find the max temperature in the frame
                 lomax = int(thdata[...,1].max())
                 posmax = int(thdata[...,1].argmax())
+
                 # Since argmax returns a linear index, convert back to row and col
                 self._mcol, self._mrow = divmod(posmax, self._width)
                 himax = int(thdata[self._mcol][self._mrow][0])
                 lomax=lomax*256
-                maxtemp = himax+lomax
-                maxtemp = (maxtemp/64)-273.15
-                maxtemp = round(maxtemp,2)
+                self._maxTemp = round(self._convertTemperature(himax+lomax), 2)
 
                 
-                # Find the lowest temperature in the frame
+                # Find the min temperature in the frame
                 lomin = int(thdata[...,1].min())
                 posmin = int(thdata[...,1].argmin())
                 
@@ -346,45 +370,19 @@ class ThermalCameraController:
                 self._lcol, self._lrow = divmod(posmin, self._width)
                 himin = int(thdata[self._lcol][self._lrow][0])
                 lomin=lomin*256
-                self._minTemp = int(himin+lomin)
-                self._minTemp = (self._minTemp/64)-273.15
-                self._minTemp = round(self._minTemp,2)
+                self._minTemp = round(self._convertTemperature(himin+lomin), 2)
 
                 # Find the average temperature in the frame
                 loavg = int(thdata[...,1].mean())
                 hiavg = int(thdata[...,0].mean())
                 loavg=loavg*256
-                self._avgTemp = loavg+hiavg
-                self._avgTemp = (self._avgTemp/64)-273.15
-                self._avgTemp = round(self._avgTemp,2)
+                self._avgTemp = round(self._convertTemperature(loavg+hiavg), 2)
                 
-                # Apply affects
-                heatmap = self._applyEffects(imdata=imdata)
-
-                # Apply colormap
-                heatmap = self._applyColormap(heatmap=heatmap)
-
-                # Draw crosshairs
-                heatmap = self._drawCrosshairs(heatmap)
-                
-                # Draw temp
-                heatmap = self._drawTemp(heatmap, temp=self._temp)
-
-                # Draw HUD
-                if self._isHudVisible == True:
-                    heatmap = self._drawHUD(heatmap=heatmap)
-                
-                #Yeah, this looks like we can probably do this next bit more efficiently!
-                # Display floating max temp
-                # if self._maxTemp > self._avgTemp+self._threshold:
-                #     heatmap = self._drawMaxTemp(heatmap)
-
-                # # Display floating min temp
-                # if self._minTemp < self._avgTemp-self._threshold:
-                #     heatmap = self._drawMinTemp(heatmap)
+                # Draw GUI elements
+                heatmap = self._drawGUI(imdata=imdata)
 
                 # Display image
-                cv2.imshow('Thermal', heatmap)
+                cv2.imshow(self._windowTitle, heatmap)
 
                 # Check for recording
                 if self._isRecording == True:
@@ -395,4 +393,7 @@ class ThermalCameraController:
                 # Check for inputs
                 keyPress = cv2.waitKey(1)
                 self._checkForKeyPress(keyPress=keyPress, heatmap=heatmap)
-                
+
+                # Check for quit
+                if keyPress == ord(KEY_QUIT):
+                    return
