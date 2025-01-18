@@ -16,11 +16,14 @@ class ThermalCameraController:
         self._threshold = threshold
         self._isHudVisible = isHudVisible
         
+        self._scaledWidth = self._width * self._scale
+        self._scaledHeight = self._height * self._scale
+        self._font = cv2.FONT_HERSHEY_SIMPLEX
         self._isRecording = False
         self._isFullscreen = False
         self._elapsed = "00:00:00"
         self._snaptime = "None"
-        
+        self._colormapText = "None"
         self._cap = None
     
     @staticmethod
@@ -49,6 +52,67 @@ class ThermalCameraController:
         print('Fork Author: Riley Meyerkorth 17 January 2025')
         print('A Python program to read, parse and display thermal data from the Topdon TC001 and TS001 Thermal cameras!\n')
 
+    def _drawTemp(self, heatmap, temp):
+        cv2.putText(heatmap,str(temp)+' C', (int(self._scaledWidth/2)+10, int(self._scaledHeight/2)-10),\
+        self._font, 0.45,(0, 0, 0), 2, cv2.LINE_AA)
+        cv2.putText(heatmap,str(temp)+' C', (int(self._scaledWidth/2)+10, int(self._scaledHeight/2)-10),\
+        self._font, 0.45,(0, 255, 255), 1, cv2.LINE_AA)
+        
+        return heatmap
+
+    def _drawCrosshairs(self, heatmap):
+        cv2.line(heatmap,(int(self._scaledWidth/2),int(self._scaledHeight/2)+20),\
+        (int(self._scaledWidth/2),int(self._scaledHeight/2)-20),(255,255,255),2) #vline
+        cv2.line(heatmap,(int(self._scaledWidth/2)+20,int(self._scaledHeight/2)),\
+        (int(self._scaledWidth/2)-20,int(self._scaledHeight/2)),(255,255,255),2) #hline
+
+        cv2.line(heatmap,(int(self._scaledWidth/2),int(self._scaledHeight/2)+20),\
+        (int(self._scaledWidth/2),int(self._scaledHeight/2)-20),(0,0,0),1) #vline
+        cv2.line(heatmap,(int(self._scaledWidth/2)+20,int(self._scaledHeight/2)),\
+        (int(self._scaledWidth/2)-20,int(self._scaledHeight/2)),(0,0,0),1) #hline
+        
+        return heatmap
+
+    def _drawGUI(self, heatmap):
+        
+        return heatmap
+
+    def _drawHUD(self, heatmap):
+        
+        # Display black box for our data
+        cv2.rectangle(heatmap, (0, 0),(160, 120), (0,0,0), -1)
+        
+        # Put text in the box
+        cv2.putText(heatmap,'Avg Temp: '+str(self._avgtemp)+' C', (10, 14),\
+        self._font, 0.4,(0, 255, 255), 1, cv2.LINE_AA)
+
+        cv2.putText(heatmap,'Label Threshold: '+str(self._threshold)+' C', (10, 28),\
+        self._font, 0.4,(0, 255, 255), 1, cv2.LINE_AA)
+
+        cv2.putText(heatmap,'Colormap: '+self._colormapText, (10, 42),\
+        self._font, 0.4,(0, 255, 255), 1, cv2.LINE_AA)
+
+        cv2.putText(heatmap,'Blur: '+str(self._blurRadius)+' ', (10, 56),\
+        self._font, 0.4,(0, 255, 255), 1, cv2.LINE_AA)
+
+        cv2.putText(heatmap,'Scaling: '+str(self._scale)+' ', (10, 70),\
+        self._font, 0.4,(0, 255, 255), 1, cv2.LINE_AA)
+
+        cv2.putText(heatmap,'Contrast: '+str(self._contrast)+' ', (10, 84),\
+        self._font, 0.4,(0, 255, 255), 1, cv2.LINE_AA)
+
+        cv2.putText(heatmap,'Snapshot: '+self._snaptime+' ', (10, 98),\
+        self._font, 0.4,(0, 255, 255), 1, cv2.LINE_AA)
+
+        if self._isRecording == False:
+            cv2.putText(heatmap,'Recording: '+self._isRecording, (10, 112),\
+            self._font, 0.4,(200, 200, 200), 1, cv2.LINE_AA)
+        else:
+            cv2.putText(heatmap,'Recording: '+self._elapsed, (10, 112),\
+            self._font, 0.4,(40, 40, 255), 1, cv2.LINE_AA)
+            
+        return heatmap
+
     def run(self):
         # Initialize video
         self._cap = cv2.VideoCapture(self._deviceIndex)
@@ -59,25 +123,22 @@ class ThermalCameraController:
         """
         #cap.set(cv2.CAP_PROP_CONVERT_RGB, 0)
         
-        # Initialize the settings
-        newWidth = self._width*scale 
-        newHeight = self._height*scale
-        font=cv2.FONT_HERSHEY_SIMPLEX
+        # Initialize the GUI
         cv2.namedWindow('Thermal',cv2.WINDOW_GUI_NORMAL)
-        cv2.resizeWindow('Thermal', newWidth,newHeight)
+        cv2.resizeWindow('Thermal', self._scaledWidth, self._scaledHeight)
 
         def rec():
             now = time.strftime("%Y%m%d--%H%M%S")
             #do NOT use mp4 here, it is flakey!
-            videoOut = cv2.VideoWriter(now+'output.avi', cv2.VideoWriter_fourcc(*'XVID'),25, (newWidth,newHeight))
+            videoOut = cv2.VideoWriter(now+'output.avi', cv2.VideoWriter_fourcc(*'XVID'),25, (self._scaledWidth,self._scaledHeight))
             return(videoOut)
 
         def snapshot(heatmap):
             #I would put colons in here, but it Win throws a fit if you try and open them!
             now = time.strftime("%Y%m%d-%H%M%S") 
-            snaptime = time.strftime("%H:%M:%S")
+            self._snaptime = time.strftime("%H:%M:%S")
             cv2.imwrite("TC001"+now+".png", heatmap)
-            return snaptime
+            return self._snaptime
 
         while(self._cap.isOpened()):
             # Capture frame-by-frame
@@ -99,7 +160,7 @@ class ThermalCameraController:
                 lomax = int(thdata[...,1].max())
                 posmax = int(thdata[...,1].argmax())
                 # Since argmax returns a linear index, convert back to row and col
-                mcol,mrow = divmod(posmax,width)
+                mcol,mrow = divmod(posmax,self._width)
                 himax = int(thdata[mcol][mrow][0])
                 lomax=lomax*256
                 maxtemp = himax+lomax
@@ -112,7 +173,7 @@ class ThermalCameraController:
                 posmin = int(thdata[...,1].argmin())
                 
                 # Since argmax returns a linear index, convert back to row and col
-                lcol,lrow = divmod(posmin,width)
+                lcol,lrow = divmod(posmin, self._width)
                 himin = int(thdata[lcol][lrow][0])
                 lomin=lomin*256
                 mintemp = int(himin+lomin)
@@ -126,186 +187,144 @@ class ThermalCameraController:
                 avgtemp = loavg+hiavg
                 avgtemp = (avgtemp/64)-273.15
                 avgtemp = round(avgtemp,2)
-
                 
                 # Contrast
-                bgr = cv2.convertScaleAbs(imdata, alpha=alpha)#Contrast
+                bgr = cv2.convertScaleAbs(imdata, alpha=self._contrast)#Contrast
                 # Bicubic interpolate, upscale and blur
-                bgr = cv2.resize(bgr,(newWidth,newHeight),interpolation=cv2.INTER_CUBIC)#Scale up!
-                if rad>0:
-                    bgr = cv2.blur(bgr,(rad,rad))
+                bgr = cv2.resize(bgr,(self._scaledWidth,self._scaledHeight),interpolation=cv2.INTER_CUBIC)#Scale up!
+                if self._blurRadius>0:
+                    bgr = cv2.blur(bgr,(self._blurRadius,self._blurRadius))
 
                 # Apply colormap
                 heatmap = bgr
-                cmapText = ""
-                match Colormap(colormap):
+                match Colormap(self._colormap):
                     case Colormap.JET:
                         heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_JET)
-                        cmapText = 'Jet'
+                        self._colormapText = 'Jet'
                     case Colormap.HOT:
                         heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_HOT)
-                        cmapText = 'Hot'
+                        self._colormapText = 'Hot'
                     case Colormap.MAGMA:
                         heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_MAGMA)
-                        cmapText = 'Magma'
+                        self._colormapText = 'Magma'
                     case Colormap.INFERNO:
                         heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_INFERNO)
-                        cmapText = 'Inferno'
+                        self._colormapText = 'Inferno'
                     case Colormap.PLASMA:
                         heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_PLASMA)
-                        cmapText = 'Plasma'
+                        self._colormapText = 'Plasma'
                     case Colormap.BONE:
                         heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_BONE)
-                        cmapText = 'Bone'
+                        self._colormapText = 'Bone'
                     case Colormap.SPRING:
                         heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_SPRING)
-                        cmapText = 'Spring'
+                        self._colormapText = 'Spring'
                     case Colormap.AUTUMN:
                         heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_AUTUMN)
-                        cmapText = 'Autumn'
+                        self._colormapText = 'Autumn'
                     case Colormap.VIRIDIS:
                         heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_VIRIDIS)
-                        cmapText = 'Viridis'
+                        self._colormapText = 'Viridis'
                     case Colormap.PARULA:
                         heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_PARULA)
-                        cmapText = 'Parula'
+                        self._colormapText = 'Parula'
                     case Colormap.INV_RAINBOW:
                         heatmap = cv2.applyColorMap(bgr, cv2.COLORMAP_RAINBOW)
                         heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
-                        cmapText = 'Inv Rainbow'
+                        self._colormapText = 'Inv Rainbow'
                     case _:
                         heatmap = bgr
-                        cmapText = 'None'
+                        self._colormapText = 'None'
 
                 # Draw crosshairs
-                cv2.line(heatmap,(int(newWidth/2),int(newHeight/2)+20),\
-                (int(newWidth/2),int(newHeight/2)-20),(255,255,255),2) #vline
-                cv2.line(heatmap,(int(newWidth/2)+20,int(newHeight/2)),\
-                (int(newWidth/2)-20,int(newHeight/2)),(255,255,255),2) #hline
-
-                cv2.line(heatmap,(int(newWidth/2),int(newHeight/2)+20),\
-                (int(newWidth/2),int(newHeight/2)-20),(0,0,0),1) #vline
-                cv2.line(heatmap,(int(newWidth/2)+20,int(newHeight/2)),\
-                (int(newWidth/2)-20,int(newHeight/2)),(0,0,0),1) #hline
+                heatmap = self._drawCrosshairs(heatmap)
                 
-                # Show temp
-                cv2.putText(heatmap,str(temp)+' C', (int(newWidth/2)+10, int(newHeight/2)-10),\
-                font, 0.45,(0, 0, 0), 2, cv2.LINE_AA)
-                cv2.putText(heatmap,str(temp)+' C', (int(newWidth/2)+10, int(newHeight/2)-10),\
-                font, 0.45,(0, 255, 255), 1, cv2.LINE_AA)
+                # Draw temp
+                heatmap = self._drawTemp(heatmap, temp=temp)
 
-                if hud==True:
-                    # Display black box for our data
-                    cv2.rectangle(heatmap, (0, 0),(160, 120), (0,0,0), -1)
-                    
-                    # Put text in the box
-                    cv2.putText(heatmap,'Avg Temp: '+str(avgtemp)+' C', (10, 14),\
-                    font, 0.4,(0, 255, 255), 1, cv2.LINE_AA)
-
-                    cv2.putText(heatmap,'Label Threshold: '+str(threshold)+' C', (10, 28),\
-                    font, 0.4,(0, 255, 255), 1, cv2.LINE_AA)
-
-                    cv2.putText(heatmap,'Colormap: '+cmapText, (10, 42),\
-                    font, 0.4,(0, 255, 255), 1, cv2.LINE_AA)
-
-                    cv2.putText(heatmap,'Blur: '+str(rad)+' ', (10, 56),\
-                    font, 0.4,(0, 255, 255), 1, cv2.LINE_AA)
-
-                    cv2.putText(heatmap,'Scaling: '+str(scale)+' ', (10, 70),\
-                    font, 0.4,(0, 255, 255), 1, cv2.LINE_AA)
-
-                    cv2.putText(heatmap,'Contrast: '+str(alpha)+' ', (10, 84),\
-                    font, 0.4,(0, 255, 255), 1, cv2.LINE_AA)
-
-                    cv2.putText(heatmap,'Snapshot: '+snaptime+' ', (10, 98),\
-                    font, 0.4,(0, 255, 255), 1, cv2.LINE_AA)
-
-                    if recording == False:
-                        cv2.putText(heatmap,'Recording: '+elapsed, (10, 112),\
-                        font, 0.4,(200, 200, 200), 1, cv2.LINE_AA)
-                    if recording == True:
-                        cv2.putText(heatmap,'Recording: '+elapsed, (10, 112),\
-                        font, 0.4,(40, 40, 255), 1, cv2.LINE_AA)
+                # Draw HUD
+                if self._isHudVisible==True:
+                    heatmap = self._drawGUI(heatmap=heatmap)
                 
                 #Yeah, this looks like we can probably do this next bit more efficiently!
                 # Display floating max temp
-                if maxtemp > avgtemp+threshold:
-                    cv2.circle(heatmap, (mrow*scale, mcol*scale), 5, (0,0,0), 2)
-                    cv2.circle(heatmap, (mrow*scale, mcol*scale), 5, (0,0,255), -1)
-                    cv2.putText(heatmap,str(maxtemp)+' C', ((mrow*scale)+10, (mcol*scale)+5),\
-                    font, 0.45,(0,0,0), 2, cv2.LINE_AA)
-                    cv2.putText(heatmap,str(maxtemp)+' C', ((mrow*scale)+10, (mcol*scale)+5),\
-                    font, 0.45,(0, 255, 255), 1, cv2.LINE_AA)
+                if maxtemp > avgtemp+self._threshold:
+                    cv2.circle(heatmap, (mrow*self._scale, mcol*self._scale), 5, (0,0,0), 2)
+                    cv2.circle(heatmap, (mrow*self._scale, mcol*self._scale), 5, (0,0,255), -1)
+                    cv2.putText(heatmap,str(maxtemp)+' C', ((mrow*self._scale)+10, (mcol*self._scale)+5),\
+                    self._font, 0.45,(0,0,0), 2, cv2.LINE_AA)
+                    cv2.putText(heatmap,str(maxtemp)+' C', ((mrow*self._scale)+10, (mcol*self._scale)+5),\
+                    self._font, 0.45,(0, 255, 255), 1, cv2.LINE_AA)
 
                 # Display floating min temp
-                if mintemp < avgtemp-threshold:
-                    cv2.circle(heatmap, (lrow*scale, lcol*scale), 5, (0,0,0), 2)
-                    cv2.circle(heatmap, (lrow*scale, lcol*scale), 5, (255,0,0), -1)
-                    cv2.putText(heatmap,str(mintemp)+' C', ((lrow*scale)+10, (lcol*scale)+5),\
-                    font, 0.45,(0,0,0), 2, cv2.LINE_AA)
-                    cv2.putText(heatmap,str(mintemp)+' C', ((lrow*scale)+10, (lcol*scale)+5),\
-                    font, 0.45,(0, 255, 255), 1, cv2.LINE_AA)
+                if mintemp < avgtemp-self._threshold:
+                    cv2.circle(heatmap, (lrow*self._scale, lcol*self._scale), 5, (0,0,0), 2)
+                    cv2.circle(heatmap, (lrow*self._scale, lcol*self._scale), 5, (255,0,0), -1)
+                    cv2.putText(heatmap,str(mintemp)+' C', ((lrow*self._scale)+10, (lcol*self._scale)+5),\
+                    self._font, 0.45,(0,0,0), 2, cv2.LINE_AA)
+                    cv2.putText(heatmap,str(mintemp)+' C', ((lrow*self._scale)+10, (lcol*self._scale)+5),\
+                    self._font, 0.45,(0, 255, 255), 1, cv2.LINE_AA)
 
                 # Display image
-                cv2.imshow('Thermal',heatmap)
+                cv2.imshow('Thermal', heatmap)
 
-                if recording == True:
-                    elapsed = (time.time() - start)
-                    elapsed = time.strftime("%H:%M:%S", time.gmtime(elapsed)) 
+                if self._isRecording == True:
+                    self._elapsed = (time.time() - start)
+                    self._elapsed = time.strftime("%H:%M:%S", time.gmtime(elapsed)) 
                     videoOut.write(heatmap)
                 
                 keyPress = cv2.waitKey(1)
                 if keyPress == ord(KEY_INCREASE_BLUR): # Increase blur radius
-                    rad += 1
+                    self._blurRadius += 1
                 if keyPress == ord(KEY_DECREASE_BLUR): # Decrease blur radius
-                    rad -= 1
-                    if rad <= 0:
-                        rad = 0
+                    self._blurRadius -= 1
+                    if self._blurRadius <= 0:
+                        self._blurRadius = 0
 
                 if keyPress == ord(KEY_INCREASE_FLOATING_HIGH_LOW_TEMP_LABEL_THRESHOLD): # Increase threshold
-                    threshold += 1
+                    self._threshold += 1
                 if keyPress == ord(KEY_DECREASE_FLOATING_HIGH_LOW_TEMP_LABEL_THRESHOLD): # Decrease threashold
-                    threshold -= 1
-                    if threshold <= 0:
-                        threshold = 0
+                    self._threshold -= 1
+                    if self._threshold <= 0:
+                        self._threshold = 0
 
                 if keyPress == ord(KEY_INCREASE_SCALE): # Increase scale
-                    scale += 1
-                    if scale >=5:
-                        scale = 5
-                    newWidth = width*scale
-                    newHeight = height*scale
-                    if dispFullscreen == False:
-                        cv2.resizeWindow('Thermal', newWidth,newHeight)
+                    self._scale += 1
+                    if self._scale >=5:
+                        self._scale = 5
+                    self._scaledWidth = self._width*self._scale
+                    self._scaledHeight = self._height*self._scale
+                    if self._isFullscreen == False:
+                        cv2.resizeWindow('Thermal', self._scaledWidth,self._scaledHeight)
                 if keyPress == ord(KEY_DECREASE_SCALE): # Decrease scale
-                    scale -= 1
-                    if scale <= 1:
-                        scale = 1
-                    newWidth = width*scale
-                    newHeight = height*scale
-                    if dispFullscreen == False:
-                        cv2.resizeWindow('Thermal', newWidth,newHeight)
+                    self._scale -= 1
+                    if self._scale <= 1:
+                        self._scale = 1
+                    self._scaledWidth = self._width*self._scale
+                    self._scaledHeight = self._height*self._scale
+                    if self._isFullscreen == False:
+                        cv2.resizeWindow('Thermal', self._scaledWidth,self._scaledHeight)
 
                 if keyPress == ord(KEY_FULLSCREEN): # Enable fullscreen
-                    dispFullscreen = True
+                    self._isFullscreen = True
                     cv2.namedWindow('Thermal',cv2.WND_PROP_FULLSCREEN)
                     cv2.setWindowProperty('Thermal',cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
                 if keyPress == ord(KEY_WINDOWED): # Disable fullscreen
-                    dispFullscreen = False
+                    self._isFullscreen = False
                     cv2.namedWindow('Thermal',cv2.WINDOW_GUI_NORMAL)
                     cv2.setWindowProperty('Thermal',cv2.WND_PROP_AUTOSIZE,cv2.WINDOW_GUI_NORMAL)
-                    cv2.resizeWindow('Thermal', newWidth,newHeight)
+                    cv2.resizeWindow('Thermal', self._scaledWidth,self._scaledHeight)
 
                 if keyPress == ord(KEY_INCREASE_CONTRAST): # Increase contrast
-                    alpha += 0.1
-                    alpha = round(alpha,1) #fix round error
-                    if alpha >= 3.0:
-                        alpha=3.0
+                    self._contrast += 0.1
+                    self._contrast = round(self._contrast,1) #fix round error
+                    if self._contrast >= 3.0:
+                        self._contrast=3.0
                 if keyPress == ord(KEY_DECREASE_CONTRAST): # Decrease contrast
-                    alpha -= 0.1
-                    alpha = round(alpha,1)#fix round error
-                    if alpha<=0:
-                        alpha = 0.0
+                    self._contrast -= 0.1
+                    self._contrast = round(self._contrast,1)#fix round error
+                    if self._contrast<=0:
+                        self._contrast = 0.0
 
 
                 if keyPress == ord(KEY_TOGGLE_HUD): # Toggle HUD
