@@ -23,7 +23,7 @@ def main():
         
     # Initialize the controller
     c = ThermalCameraController(
-        deviceIndex=1)
+        deviceIndex=0)
     
     # Print the credits and bindings
     c.printCredits()
