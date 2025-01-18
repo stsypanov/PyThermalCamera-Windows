@@ -7,7 +7,7 @@ Forked by Riley Meyerkorth on 17 January 2025 to modernize and clean up the prog
 '''
 
 import argparse
-from thermalcameracontroller import ThermalCameraController
+from controllers.thermalcameracontroller import ThermalCameraController
 
 # Initialize argument parsing
 parser = argparse.ArgumentParser()

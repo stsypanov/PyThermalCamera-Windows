@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import argparse
-from deviceHelper import getDevices
+from helpers.deviceHelper import getDevices
 
 # Initialize argument parsing
 parser = argparse.ArgumentParser()
