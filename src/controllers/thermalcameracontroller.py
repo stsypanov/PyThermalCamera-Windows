@@ -1,12 +1,20 @@
 import cv2, time, os
 import numpy as np
 
+from defaults.values import *
+from defaults.keybinds import *
+
 from enums.ColormapEnum import Colormap
 from controllers.guiController import GuiController
-from constants.keybinds import *
 
 class ThermalCameraController:
-    def __init__(self, deviceIndex: int = 0, width: int = 256, height: int = 192, fps: int = 25, deviceName: str = "TC001", mediaOutputPath: str = f"{os.getcwd()}/output"):
+    def __init__(self, 
+                 deviceIndex: int = VIDEO_DEVICE_INDEX, 
+                 width: int = SENSOR_WIDTH, 
+                 height: int = SENSOR_HEIGHT, 
+                 fps: int = DEVICE_FPS, 
+                 deviceName: str = DEVICE_NAME, 
+                 mediaOutputPath: str = MEDIA_OUTPUT_PATH):
         # Parameters init
         self._deviceIndex: int = deviceIndex
         self._deviceName: str = deviceName
@@ -15,18 +23,18 @@ class ThermalCameraController:
         self._fps: int = fps
 
         # Calculated values init
-        self._rawTemp = 0
-        self._temp = 0
+        self._rawTemp = TEMPERATURE_RAW
+        self._temp = TEMPERATURE
+        self._maxTemp = TEMPERATURE_MAX
+        self._minTemp = TEMPERATURE_MIN
+        self._avgTemp = TEMPERATURE_AVG
         self._mcol: int = 0
         self._mrow: int = 0
         self._lcol: int = 0
         self._lrow: int = 0
-        self._maxTemp = 0
-        self._minTemp = 0
-        self._avgTemp = 0
         
         # Media/recording init
-        self._isRecording = False
+        self._isRecording = RECORDING
         self._mediaOutputPath: str = mediaOutputPath
         
         if not os.path.exists(self._mediaOutputPath):
@@ -34,10 +42,8 @@ class ThermalCameraController:
         
         # GUI Init
         self._guiController = GuiController(
-            windowTitle="Thermal",
             width=self._width,
-            height=self._height
-        )
+            height=self._height)
         
         # OpenCV init
         self._cap = None
@@ -109,33 +115,33 @@ class ThermalCameraController:
         """
         ### BLUR RADIUS
         if keyPress == ord(KEY_INCREASE_BLUR): # Increase blur radius
-            self._guiController.blurRadius += 1
+            self._guiController.blurRadius += BLUR_RADIUS_INCREMENT
         if keyPress == ord(KEY_DECREASE_BLUR): # Decrease blur radius
-            self._guiController.blurRadius -= 1
-            if self._guiController.blurRadius <= 0:
-                self._guiController.blurRadius = 0
+            self._guiController.blurRadius -= BLUR_RADIUS_INCREMENT
+            if self._guiController.blurRadius <= BLUR_RADIUS_MIN:
+                self._guiController.blurRadius = BLUR_RADIUS_MIN
 
         ### THRESHOLD CONTROL
         if keyPress == ord(KEY_INCREASE_FLOATING_HIGH_LOW_TEMP_LABEL_THRESHOLD): # Increase threshold
-            self._guiController.threshold += 1
+            self._guiController.threshold += THRESHOLD_INCREMENT
         if keyPress == ord(KEY_DECREASE_FLOATING_HIGH_LOW_TEMP_LABEL_THRESHOLD): # Decrease threashold
-            self._guiController.threshold -= 1
-            if self._guiController.threshold <= 0:
-                self._guiController.threshold = 0
+            self._guiController.threshold -= THRESHOLD_INCREMENT
+            if self._guiController.threshold <= THRESHOLD_MIN:
+                self._guiController.threshold = THRESHOLD_MIN
 
         ### SCALE CONTROLS
         if keyPress == ord(KEY_INCREASE_SCALE): # Increase scale
-            self._guiController.scale += 1
-            if self._guiController.scale >=5:
-                self._guiController.scale = 5
+            self._guiController.scale += SCALE_INCREMENT
+            if self._guiController.scale >= SCALE_MAX:
+                self._guiController.scale = SCALE_MAX
             self._guiController.scaledWidth = self._width*self._guiController.scale
             self._guiController.scaledHeight = self._height*self._guiController.scale
             if self._guiController.isFullscreen == False:
                 cv2.resizeWindow(self._guiController.windowTitle, self._guiController.scaledWidth, self._guiController.scaledHeight)
         if keyPress == ord(KEY_DECREASE_SCALE): # Decrease scale
-            self._guiController.scale -= 1
-            if self._guiController.scale <= 1:
-                self._guiController.scale = 1
+            self._guiController.scale -= SCALE_INCREMENT
+            if self._guiController.scale <= SCALE_MIN:
+                self._guiController.scale = SCALE_MIN
             self._guiController.scaledWidth = self._width*self._guiController.scale
             self._guiController.scaledHeight = self._height*self._guiController.scale
             if self._guiController.isFullscreen == False:
@@ -143,37 +149,37 @@ class ThermalCameraController:
 
         ### FULLSCREEN CONTROLS
         if keyPress == ord(KEY_FULLSCREEN): # Enable fullscreen
-            self._guiController.isFullscreen = True
+            self._guiController.isFullscreen = FULLSCREEN
             cv2.namedWindow(self._guiController.windowTitle, cv2.WND_PROP_FULLSCREEN)
             cv2.setWindowProperty(self._guiController.windowTitle, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         if keyPress == ord(KEY_WINDOWED): # Disable fullscreen
-            self._guiController.isFullscreen = False
+            self._guiController.isFullscreen = not FULLSCREEN
             cv2.namedWindow(self._guiController.windowTitle, cv2.WINDOW_GUI_NORMAL)
             cv2.setWindowProperty(self._guiController.windowTitle, cv2.WND_PROP_AUTOSIZE, cv2.WINDOW_GUI_NORMAL)
             cv2.resizeWindow(self._guiController.windowTitle, self._guiController.scaledWidth, self._guiController.scaledHeight)
 
         ### CONTRAST CONTROLS
         if keyPress == ord(KEY_INCREASE_CONTRAST): # Increase contrast
-            self._guiController.contrast += 0.1
-            self._guiController.contrast = round(self._guiController.contrast,1) #fix round error
-            if self._guiController.contrast >= 3.0:
-                self._guiController.contrast=3.0
+            self._guiController.contrast += CONTRAST_INCREMENT
+            self._guiController.contrast = round(self._guiController.contrast, 1) #fix round error
+            if self._guiController.contrast >= CONTRAST_MAX:
+                self._guiController.contrast = CONTRAST_MAX
         if keyPress == ord(KEY_DECREASE_CONTRAST): # Decrease contrast
-            self._guiController.contrast -= 0.1
+            self._guiController.contrast -= CONTRAST_INCREMENT
             self._guiController.contrast = round(self._guiController.contrast,1)#fix round error
-            if self._guiController.contrast<=0:
-                self._guiController.contrast = 0.0
+            if self._guiController.contrast <= CONTRAST_MIN:
+                self._guiController.contrast = CONTRAST_MIN
 
         ### HUD CONTROLS
         if keyPress == ord(KEY_TOGGLE_HUD): # Toggle HUD
-            if self._guiController.isHudVisible==True:
-                self._guiController.isHudVisible=False
-            elif self._guiController.isHudVisible==False:
-                self._guiController.isHudVisible=True
+            if self._guiController.isHudVisible == True:
+                self._guiController.isHudVisible = not HUD_VISIBLE
+            elif self._guiController.isHudVisible == False:
+                self._guiController.isHudVisible = HUD_VISIBLE
 
         ### COLOR MAPS
         if keyPress == ord(KEY_CYCLE_THROUGH_COLORMAPS): # Cycle through color maps
-            if self._guiController.colormap.value+1 > Colormap.INV_RAINBOW.value:
+            if self._guiController.colormap.value + 1 > Colormap.INV_RAINBOW.value:
                 self._guiController.colormap = Colormap.NONE
             else:
                 self._guiController.colormap = Colormap(self._guiController.colormap.value + 1)
@@ -181,15 +187,15 @@ class ThermalCameraController:
         ### RECORDING/MEDIA CONTROLS
         if keyPress == ord(KEY_RECORD) and self._isRecording == False: # Start reording
             self._videoOut = self._record()
-            self._isRecording = True
+            self._isRecording = RECORDING
             self._guiController.recordingStartTime = time.time()
             
         if keyPress == ord(KEY_STOP): # Stop reording
-            self._isRecording = False
-            self._guiController.elapsed = "00:00:00"
+            self._isRecording = not RECORDING
+            self._guiController.recordingDuration = RECORDING_DURATION
 
         if keyPress == ord(KEY_SNAPSHOT): # Take a snapshot
-            self._guiController.snaptime = self._snapshot(img)
+            self._guiController.last_snapshot_time = self._snapshot(img)
 
     def _record(self):
         """
@@ -210,9 +216,9 @@ class ThermalCameraController:
         """
         #I would put colons in here, but it Win throws a fit if you try and open them!
         currentTimeStr = time.strftime("%Y%m%d-%H%M%S") 
-        self._guiController.snaptime = time.strftime("%H:%M:%S")
+        self._guiController.last_snapshot_time = time.strftime("%H:%M:%S")
         cv2.imwrite(f"{self._mediaOutputPath}/{self._deviceName}-{currentTimeStr}.png", img)
-        return self._guiController.snaptime
+        return self._guiController.last_snapshot_time
 
     def normalizeTemperature(self, rawTemp: float, d: int = 64, c: float = 273.15) -> float:
         """
@@ -226,7 +232,7 @@ class ThermalCameraController:
         Calculates the (normalized) temperature of the frame.
         """
         raw = self.calculateRawTemperature(thdata)
-        return round(self.normalizeTemperature(raw), 2)
+        return round(self.normalizeTemperature(raw), TEMPERATURE_SIG_DIGITS)
 
     def calculateRawTemperature(self, thdata):
         """
@@ -234,7 +240,7 @@ class ThermalCameraController:
         """
         hi = int(thdata[96][128][0])
         lo = int(thdata[96][128][1])
-        lo = lo*256
+        lo = lo * 256
         return hi+lo
 
     def calculateAverageTemperature(self, thdata):
@@ -243,8 +249,8 @@ class ThermalCameraController:
         """
         loavg = int(thdata[...,1].mean())
         hiavg = int(thdata[...,0].mean())
-        loavg=loavg*256
-        return round(self.normalizeTemperature(loavg+hiavg), 2)
+        loavg = loavg * 256
+        return round(self.normalizeTemperature(loavg+hiavg), TEMPERATURE_SIG_DIGITS)
 
     def calculateMinimumTemperature(self, thdata):
         """
@@ -257,9 +263,9 @@ class ThermalCameraController:
         # Since argmax returns a linear index, convert back to row and col
         self._lcol, self._lrow = divmod(posmin, self._width)
         himin = int(thdata[self._lcol][self._lrow][0])
-        lomin=lomin*256
+        lomin = lomin * 256
         
-        return round(self.normalizeTemperature(himin+lomin), 2)
+        return round(self.normalizeTemperature(himin+lomin), TEMPERATURE_SIG_DIGITS)
 
     def calculateMaximumTemperature(self, thdata):
         """
@@ -272,9 +278,9 @@ class ThermalCameraController:
         # Since argmax returns a linear index, convert back to row and col
         self._mcol, self._mrow = divmod(posmax, self._width)
         himax = int(thdata[self._mcol][self._mrow][0])
-        lomax=lomax*256
+        lomax = lomax * 256
         
-        return round(self.normalizeTemperature(himax+lomax), 2)
+        return round(self.normalizeTemperature(himax+lomax), TEMPERATURE_SIG_DIGITS)
 
     def run(self):
         """

@@ -1,0 +1,15 @@
+from cv2 import FONT_HERSHEY_SIMPLEX
+
+### GUI CONSTANTS
+WINDOW_TITLE: str = "Thermal Camera"
+FULLSCREEN: bool = False
+HUD_VISIBLE: bool = True
+LAST_SNAPSHOT_TIME: str = ""
+RECORDING_START_TIME: str = ""
+RECORDING_DURATION: str = "00:00:00"
+FONT: int = FONT_HERSHEY_SIMPLEX
+# Scale
+SCALE: int = 3
+SCALE_MAX: int = 5
+SCALE_MIN: int = 1
+SCALE_INCREMENT: int = 1

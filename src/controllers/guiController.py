@@ -1,11 +1,19 @@
 import time
 import cv2
 
+from defaults.values import *
 from enums.ColormapEnum import Colormap
 
-
 class GuiController:
-    def __init__(self, windowTitle: str, width: int, height: int, scale: int = 3, colormap: Colormap = Colormap.NONE, contrast: float = 1.0, blurRadius: int = 0, threshold: int = 2):
+    def __init__(self, 
+                 windowTitle: str = WINDOW_TITLE, 
+                 width: int = SENSOR_WIDTH, 
+                 height: int = SENSOR_HEIGHT, 
+                 scale: int = SCALE, 
+                 colormap: Colormap = COLORMAP, 
+                 contrast: float = CONTRAST, 
+                 blurRadius: int = BLUR_RADIUS, 
+                 threshold: int = THRESHOLD):
         # Passed parameters
         self.windowTitle = windowTitle
         self.width = width
@@ -21,16 +29,16 @@ class GuiController:
         self.scaledHeight = int(self.height*self.scale)
         
         # States
-        self.isHudVisible = True
-        self.isFullscreen = False
+        self.isHudVisible = HUD_VISIBLE
+        self.isFullscreen = FULLSCREEN
         
         # Recording stats
-        self.recordingStartTime: str = ""
-        self.snaptime: str = "None"
-        self.elapsed: str = "00:00:00"
+        self.recordingStartTime: str = RECORDING_START_TIME
+        self.last_snapshot_time: str = LAST_SNAPSHOT_TIME
+        self.recordingDuration: str = RECORDING_DURATION
         
         # Other
-        self._font = cv2.FONT_HERSHEY_SIMPLEX
+        self._font = FONT
         
         # Initialize the GUI
         cv2.namedWindow(self.windowTitle, cv2.WINDOW_GUI_NORMAL)
@@ -40,8 +48,8 @@ class GuiController:
         """
         Updates the recording stats.
         """
-        self.elapsed = (time.time() - self.recordingStartTime)
-        self.elapsed = time.strftime("%H:%M:%S", time.gmtime(self.elapsed)) 
+        self.recordingDuration = (time.time() - self.recordingStartTime)
+        self.recordingDuration = time.strftime("%H:%M:%S", time.gmtime(self.recordingDuration)) 
 
     def drawTemp(self, img, temp):
         """
@@ -175,7 +183,7 @@ class GuiController:
 
         cv2.putText(
             img,
-            'Snapshot: '+self.snaptime+' ',
+            'Snapshot: '+self.last_snapshot_time+' ',
             (10, 98),
             self._font,
             0.4,
@@ -196,7 +204,7 @@ class GuiController:
         else:
             cv2.putText(
                 img,
-                'Recording: '+self.elapsed,
+                'Recording: '+self.recordingDuration,
                 (10, 112),
                 self._font,
                 0.4,
