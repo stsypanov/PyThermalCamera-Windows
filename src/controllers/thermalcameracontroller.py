@@ -70,7 +70,8 @@ class ThermalCameraController:
         print('A Python program to read, parse and display thermal data from the Topdon TC001 and TS001 Thermal cameras!\n')
 
     def _drawGUI(self, imdata):
-        """Draws the GUI elements on the thermal image.
+        """
+        Draws the GUI elements on the thermal image.
         """
         # Apply affects
         img = self._guiController.applyEffects(imdata=imdata)
@@ -103,6 +104,9 @@ class ThermalCameraController:
         return img
     
     def _checkForKeyPress(self, keyPress: int, img):
+        """
+        Checks and acts on key presses.
+        """
         ### BLUR RADIUS
         if keyPress == ord(KEY_INCREASE_BLUR): # Increase blur radius
             self._guiController.blurRadius += 1
