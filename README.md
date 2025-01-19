@@ -1,32 +1,37 @@
-# PyThermalcam
-Python Software to use the Topdon TC001 Thermal Camera on Linux and the Raspberry Pi. It **may** work with other similar cameras! Please feed back if it does!
+# PyThermalCamera - Windows
+This is a fork of the now-outdated (June 2023) Python script to display the temperature details of the [TopDon TC001 thermal camera](https://www.topdon.com/products/tc001) and similar cameras. 
 
-Huge kudos to LeoDJ on the EEVBlog forum for reverse engineering the image format from these kind of cameras (InfiRay P2 Pro) to get the raw temperature data!
-https://www.eevblog.com/forum/thermal-imaging/infiray-and-their-p2-pro-discussion/200/
-Check out Leo's Github here: https://github.com/LeoDJ/P2Pro-Viewer/tree/main
-
-
+## Table of Contents
+- [Introduction](#introduction)
+    - [Why](#why)
+    - [Credits](#credits)
+- [Features](#features)
+- [Dependencies](#dependencies)
+- [Running the Program](#running-the-program)
+    - [Basic Sandbox Program](#basic-sandbox-program)
+- [Using the Program](#using-the-program)
+    - [Key Bindings](#key-bindings)
+- [TODO](#todo)
 
 ## Introduction
-
-This is a quick and dirty Python implimentation of Thermal Camera software for the Topdon TC001!
-(https://www.amazon.co.uk/dp/B0BBRBMZ58)
-No commands are sent the the camera, instead, we take the raw video feed, do some openCV magic, and display a nice heatmap along with relevant temperature points highlighted.
+No commands are sent the the camera. Instead, we take the raw video feed, do some OpenCV processing, and display a nice heatmap along with relevant temperature points highlighted.
 
 ![Screenshot](media/TC00120230701-131032.png)
 
-This program, and associated information is Open Source (see Licence), but if you have gotten value from these kinds of projects and think they are worth something, please consider donating: https://paypal.me/leslaboratory?locale.x=en_GB 
+### Why?
+Due to updates to OpenCV, NumPy, and Python, the original script breaks on Windows. I am testing using a [TS001](https://www.topdon.com/products/ts001) on Windows, so this fork is tailored majorly towards that (but hypothetically could work on Linux and other platforms).
 
-This readme is accompanied by youtube videos. Visit my Youtube Channel at: https://www.youtube.com/leslaboratory
+I have attempted to flesh out/refactor the program and finish what Les Wright started, making it compatable with Windows systems as well as applying more polished coding practices (proper documentation, no hard-coding, strong-typing, OOP practices, etc.). It started small, but has turned into practically a full rewrite.
 
-The video is here: https://youtu.be/PiVwZoQ8_jQ
+### Credits
+The majority of the thermal data configuration work was done by the original repo author (Les Wright) and through the help of others online like LeoDJ. If you'd like to support to Les, you can [donate via this PayPal link](https://paypal.me/leslaboratory?locale.x=en_GB) or [see his YouTube channel](https://www.youtube.com/leslaboratory) and his [video on the TC001](https://youtu.be/PiVwZoQ8_jQ).
 
-
+LeoDJ was responsible for reverse engineering the image format for these types of cameras (InfiRay P2 Pro). If possible, you should read the [EEVBlog post/thread](https://www.eevblog.com/forum/thermal-imaging/infiray-and-their-p2-pro-discussion/200/) and check out [Leo's GitHub repo](https://github.com/LeoDJ/P2Pro-Viewer).
 
 ## Features
+Tested on Windows 11 Pro (update 23H2). 
 
-
-Tested on Debian all features are working correctly This has been tested on the Pi However a number of workarounds are implemented! Seemingly there are bugs in the compiled version of openCV that ships with the Pi!!
+> NOTE: Seemingly there are bugs in the compiled version of OpenCV that ships with the Pi. No workarounds have been re-implemented for the Raspberry Pi from the original code due to the workaround actually *breaking* the program on Windows. I'm not sure exactly when it broke, but it must have been between the past 2-3 years.
 
 The following features have been implemented:
 
@@ -53,64 +58,52 @@ The current settings are displayed in a box at the top left of the screen (The H
 - Time of the last snapshot image
 - Recording status
 
-
-
-
 ## Dependencies
-
-Python3 OpenCV Must be installed:
-
-
-Run: **sudo apt-get install python3-opencv**
-
-
+- Python (v3.12.4)
+- python-opencv (v##.##.##)
+- numpy (v##.##.##)
 
 ## Running the Program
+> **MAJOR NOTE**: If you have previously installed the official drivers/application from Topdon's website, ***UNINSTALL THEM COMPLETELY***. If you do not, your system will no longer recognize your camera as UVC-compatible.
 
-In src you will find two programs:
+Before running the program, please check that you have the following:
+- You have connected your camera to your system properly
+- You have the correct drivers installed (or just that the camera shows up as a video device)
+- You have all dependencies installed
+- You have Python in your `PATH`
+- You and are starting in the root directory of the repo
 
-**tc001-RAW.py** Just demonstrates how to grab raw frames from the Thermal Camera, a starting point if you want to code your own app.
+If that is in order, the following command can be used to run the program:
 
+```bash
+python src/main.py
+```
 
-**tc001v4.2.py** The main program!
+There are also optional flags/arguments that you can pass:
+- `--device [device_index]`: specifies the device to use based on it's index
 
-To run it plug in the thermal camera and run: **v4l2-ctl --list-devices** to list the devices on the system. You will need its device number.
+### Basic Sandbox Program
+`tc001-RAW.py`: Just demonstrates how to grab raw frames from the Thermal Camera, a starting point if you want to code your own app ***(currently untouched from the fork)***
 
-Assuming the device number is 0 simply issue: **python3 tc001v4.2.py --device 0**
-
-**Note**
-This is in Alpha. No error checking has been implemented yet! So if the program tries to start, then quits, either a camera is not connected, or you have entered the wrong device number.
-
-Error checking will be implemented after I refactor and optimize the code!
-
-
-
-## Key Bindings
-
-
+## Using the Program
+### Key Bindings
+These keybindings can be changed easily in the `defaults/keybinds.py` file.
 - a z: Increase/Decrease Blur
-
 - s x: Floating High and Low Temp Label Threshold'
-
 - d c: Change Interpolated scale.(Note: This will not change the window size on the Pi!)
-
 - f v: Contrast
-
-- q w: Fullscreen Windowed. (Note: Going back to windowed does not seem to work on the Pi!)
-
+- e w: Fullscreen Windowed. (Note: Going back to windowed does not seem to work on the Pi!)
 - r t: Record and Stop
-
 - m : Cycle through ColorMaps
-  
 - h : Toggle HUD
+- q : Quit the program
 
+## TODO 
+> NOTE: This to-do list will be moved into a public GitHub Kanban soon, but it's 2am and I'm tired.
 
-
-## TODO:
-
-- No Error checking is implemented!
-- No attempt has been made to refactor the code (Yet!)!
-- The code would benefit from threading especially on low speed but multicore architectures like the Pi!
-- I might add a graph.
-- I may add the ability to arbitrarily measure points.
-
+- Find versions of dependencies 
+- Temperature values appear to be calculated incorrectly at the moment. Unsure if it's something I did/removed (since I never got the "original" working)
+- Error checking
+- Threading, especially on low speed (but multicore) architectures like the Pi!
+- Add graphing
+- Ability to arbitrarily measure points.
