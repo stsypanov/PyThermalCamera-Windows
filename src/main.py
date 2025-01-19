@@ -19,11 +19,13 @@ def main():
     if args.device:
         dev = args.device
     else:
-        dev = 0
+        dev = 1
         
     # Initialize the controller
     c = ThermalCameraController(
-        deviceIndex=0)
+        deviceIndex=dev,
+        deviceName="TS001",
+        )
     
     # Print the credits and bindings
     c.printCredits()

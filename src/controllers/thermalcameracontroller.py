@@ -1,4 +1,4 @@
-import cv2, time
+import cv2, time, os
 import numpy as np
 
 from enums.ColormapEnum import Colormap
@@ -6,13 +6,13 @@ from controllers.guiController import GuiController
 from constants.keybinds import *
 
 class ThermalCameraController:
-    def __init__(self, deviceIndex: int = 0, width: int = 256, height: int = 192, deviceName: str = "TS001", mediaOutputDir: str = "output"):
+    def __init__(self, deviceIndex: int = 0, width: int = 256, height: int = 192, fps: int = 25, deviceName: str = "TC001", mediaOutputPath: str = f"{os.getcwd()}/output"):
         # Parameters init
         self._deviceIndex: int = deviceIndex
         self._deviceName: str = deviceName
         self._width: int = width
         self._height: int = height
-        self._mediaOutputDir: str = mediaOutputDir
+        self._fps: int = fps
 
         # Calculated values init
         self._rawTemp = 0
@@ -25,8 +25,12 @@ class ThermalCameraController:
         self._minTemp = 0
         self._avgTemp = 0
         
-        # States init
+        # Media/recording init
         self._isRecording = False
+        self._mediaOutputPath: str = mediaOutputPath
+        
+        if not os.path.exists(self._mediaOutputPath):
+            os.makedirs(self._mediaOutputPath)
         
         # GUI Init
         self._guiController = GuiController(
@@ -187,9 +191,9 @@ class ThermalCameraController:
         currentTimeStr = time.strftime("%Y%m%d--%H%M%S")
         #do NOT use mp4 here, it is flakey!
         self._videoOut = cv2.VideoWriter(
-            currentTimeStr+'output.avi',
+            f"{self._mediaOutputPath}/{currentTimeStr}-output.avi",
             cv2.VideoWriter_fourcc(*'XVID'),
-            25,
+            self._fps,
             (self._guiController.scaledWidth, self._guiController.scaledHeight))
         return self._videoOut
     
@@ -197,7 +201,7 @@ class ThermalCameraController:
         #I would put colons in here, but it Win throws a fit if you try and open them!
         currentTimeStr = time.strftime("%Y%m%d-%H%M%S") 
         self._guiController.snaptime = time.strftime("%H:%M:%S")
-        cv2.imwrite(f"{self._deviceName}-{currentTimeStr}.png", img)
+        cv2.imwrite(f"{self._mediaOutputPath}/{self._deviceName}-{currentTimeStr}.png", img)
         return self._guiController.snaptime
 
     def _convertTemperature(self, rawTemp: float, d: int = 64, c: float = 273.15) -> float:
