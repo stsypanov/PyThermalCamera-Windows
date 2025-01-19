@@ -1,5 +1,5 @@
 # PyThermalCamera - Windows
-This is a fork of the now-outdated (June 2023) Python script to display the temperature details of the [TopDon TC001 thermal camera](https://www.topdon.com/products/tc001) and similar cameras. 
+This is a fork of the now-outdated (June 2023) Python script to display the temperature details of the [TopDon TC001 thermal camera](https://www.topdon.com/products/tc001) and similar cameras. See [my EEVGBlog post](https://www.eevblog.com/forum/thermal-imaging/infiray-and-their-p2-pro-discussion/msg5787923/#msg5787923).
 
 ## Table of Contents
 - [Introduction](#introduction)
