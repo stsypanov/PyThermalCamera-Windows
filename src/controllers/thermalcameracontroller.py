@@ -192,6 +192,9 @@ class ThermalCameraController:
             self._guiController.snaptime = self._snapshot(img)
 
     def _record(self):
+        """
+        STart recording video to file.
+        """
         currentTimeStr = time.strftime("%Y%m%d--%H%M%S")
         #do NOT use mp4 here, it is flakey!
         self._videoOut = cv2.VideoWriter(
@@ -202,26 +205,87 @@ class ThermalCameraController:
         return self._videoOut
     
     def _snapshot(self, img):
+        """
+        Takes a snapshot of the current frame.
+        """
         #I would put colons in here, but it Win throws a fit if you try and open them!
         currentTimeStr = time.strftime("%Y%m%d-%H%M%S") 
         self._guiController.snaptime = time.strftime("%H:%M:%S")
         cv2.imwrite(f"{self._mediaOutputPath}/{self._deviceName}-{currentTimeStr}.png", img)
         return self._guiController.snaptime
 
-    def _convertTemperature(self, rawTemp: float, d: int = 64, c: float = 273.15) -> float:
+    def normalizeTemperature(self, rawTemp: float, d: int = 64, c: float = 273.15) -> float:
         """
-        Converts the temperature data using the formula provided by LeoDJ.
+        Normalizes/converts the raw temperature data using the formula found by LeoDJ.
         Link: https://www.eevblog.com/forum/thermal-imaging/infiray-and-their-p2-pro-discussion/200/
         """
         return (rawTemp/d) - c
 
+    def calculateTemperature(self, thdata):
+        """
+        Calculates the (normalized) temperature of the frame.
+        """
+        raw = self.calculateRawTemperature(thdata)
+        return round(self.normalizeTemperature(raw), 2)
+
+    def calculateRawTemperature(self, thdata):
+        """
+        Calculates the raw temperature of the frame.
+        """
+        hi = int(thdata[96][128][0])
+        lo = int(thdata[96][128][1])
+        lo = lo*256
+        return hi+lo
+
+    def calculateAverageTemperature(self, thdata):
+        """
+        Calculates the average temperature of the frame.
+        """
+        loavg = int(thdata[...,1].mean())
+        hiavg = int(thdata[...,0].mean())
+        loavg=loavg*256
+        return round(self.normalizeTemperature(loavg+hiavg), 2)
+
+    def calculateMinimumTemperature(self, thdata):
+        """
+        Calculates the minimum temperature of the frame.
+        """
+        # Find the min temperature in the frame
+        lomin = int(thdata[...,1].min())
+        posmin = int(thdata[...,1].argmin())
+        
+        # Since argmax returns a linear index, convert back to row and col
+        self._lcol, self._lrow = divmod(posmin, self._width)
+        himin = int(thdata[self._lcol][self._lrow][0])
+        lomin=lomin*256
+        
+        return round(self.normalizeTemperature(himin+lomin), 2)
+
+    def calculateMaximumTemperature(self, thdata):
+        """
+        Calculates the maximum temperature of the frame.
+        """
+        # Find the max temperature in the frame
+        lomax = int(thdata[...,1].max())
+        posmax = int(thdata[...,1].argmax())
+
+        # Since argmax returns a linear index, convert back to row and col
+        self._mcol, self._mrow = divmod(posmax, self._width)
+        himax = int(thdata[self._mcol][self._mrow][0])
+        lomax=lomax*256
+        
+        return round(self.normalizeTemperature(himax+lomax), 2)
+
     def run(self):
+        """
+        Runs the main runtime loop for the program.
+        """
         # Initialize video
         self._cap = cv2.VideoCapture(self._deviceIndex)
 
         """
         MAJOR CHANGE: Do NOT convert to RGB. For some reason, this breaks the frame temperature data on TS001.
-        Originally, it was apparently the opposite: https://stackoverflow.com/questions/63108721/opencv-setting-videocap-property-to-cap-prop-convert-rgb-generates-weird-boolean
+        Originally, it was the opposite: https://stackoverflow.com/questions/63108721/opencv-setting-videocap-property-to-cap-prop-convert-rgb-generates-weird-boolean
         """
         #cap.set(cv2.CAP_PROP_CONVERT_RGB, 0)
 
@@ -234,53 +298,34 @@ class ThermalCameraController:
                 
                 # Now parse the data from the bottom frame and convert to temp!
                 # Grab data from the center pixel...
-                hi = int(thdata[96][128][0])
-                lo = int(thdata[96][128][1])
-                lo = lo*256
-                self._rawTemp = hi+lo
-                self._temp = round(self._convertTemperature(self._rawTemp), 2)
+                self._rawTemp = self.calculateRawTemperature(thdata)
+                self._temp = self.calculateTemperature(thdata)
 
-                # Find the max temperature in the frame
-                lomax = int(thdata[...,1].max())
-                posmax = int(thdata[...,1].argmax())
-
-                # Since argmax returns a linear index, convert back to row and col
-                self._mcol, self._mrow = divmod(posmax, self._width)
-                himax = int(thdata[self._mcol][self._mrow][0])
-                lomax=lomax*256
-                self._maxTemp = round(self._convertTemperature(himax+lomax), 2)
-
+                # Calculate minimum temperature
+                self._minTemp = self.calculateMinimumTemperature(thdata)
                 
-                # Find the min temperature in the frame
-                lomin = int(thdata[...,1].min())
-                posmin = int(thdata[...,1].argmin())
-                
-                # Since argmax returns a linear index, convert back to row and col
-                self._lcol, self._lrow = divmod(posmin, self._width)
-                himin = int(thdata[self._lcol][self._lrow][0])
-                lomin=lomin*256
-                self._minTemp = round(self._convertTemperature(himin+lomin), 2)
+                # Calculate maximum temperature
+                self._maxTemp = self.calculateMaximumTemperature(thdata)
 
                 # Find the average temperature in the frame
-                loavg = int(thdata[...,1].mean())
-                hiavg = int(thdata[...,0].mean())
-                loavg=loavg*256
-                self._avgTemp = round(self._convertTemperature(loavg+hiavg), 2)
+                self._avgTemp = self.calculateAverageTemperature(thdata)
                 
                 # Draw GUI elements
                 heatmap = self._drawGUI(imdata=imdata)
 
-                # Display image
-                cv2.imshow(self._guiController.windowTitle, heatmap)
-
                 # Check for recording
                 if self._isRecording == True:
                     self._videoOut.write(heatmap)
-                
-                # Check for inputs
+                    
+                # Check for quit and other inputs
                 keyPress = cv2.waitKey(1)
-                self._checkForKeyPress(keyPress=keyPress, img=heatmap)
-
-                # Check for quit
                 if keyPress == ord(KEY_QUIT):
+                    # Check for recording and close out
+                    if self._isRecording == True:
+                        self._videoOut.release()
                     return
+
+                self._checkForKeyPress(keyPress=keyPress, img=heatmap)
+                
+                # Display image
+                cv2.imshow(self._guiController.windowTitle, heatmap)
