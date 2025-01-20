@@ -71,7 +71,7 @@ Before running the program, please check that you have the following:
 - You have the correct drivers installed (or just that the camera shows up as a video device)
 - You have all dependencies installed
 - You have Python in your `PATH`
-- You and are starting in the root directory of the repo
+- You are starting in the root directory of the repo
 
 If that is in order, the following command can be used to run the program:
 
