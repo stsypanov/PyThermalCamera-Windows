@@ -29,8 +29,9 @@ class GuiController:
         self.scaledHeight = int(self.height*self.scale)
         
         # States
-        self.isHudVisible = HUD_VISIBLE
-        self.isFullscreen = FULLSCREEN
+        self.isHudVisible: bool = HUD_VISIBLE
+        self.isFullscreen: bool = FULLSCREEN
+        self.isInverted: bool = False
         
         # Recording stats
         self.recordingStartTime: str = RECORDING_START_TIME
@@ -50,6 +51,44 @@ class GuiController:
         """
         self.recordingDuration = (time.time() - self.recordingStartTime)
         self.recordingDuration = time.strftime("%H:%M:%S", time.gmtime(self.recordingDuration)) 
+        
+    def drawGUI(self, imdata, temp, averageTemp, maxTemp, minTemp, isRecording, mrow, mcol, lrow, lcol):
+        """
+        Draws the GUI elements on the thermal image.
+        """
+        # Apply affects
+        img = self.applyEffects(imdata=imdata)
+        
+        # Apply inversion
+        if self.isInverted == True:
+            img = cv2.bitwise_not(img)
+
+        # Apply colormap
+        img = self.applyColormap(img)
+
+        # Draw crosshairs
+        img = self.drawCrosshairs(img)
+        
+        # Draw temp
+        img = self.drawTemp(img, temp)
+
+        # Draw HUD
+        if self.isHudVisible == True:
+            img = self.drawHUD(img, averageTemp, isRecording)
+        
+        # Display floating max temp
+        if maxTemp > averageTemp + self.threshold:
+            img = self.drawMaxTemp(img, mrow, mcol, maxTemp)
+
+        # Display floating min temp
+        if minTemp < averageTemp - self.threshold:
+            img = self.drawMinTemp(img, lrow, lcol, minTemp)
+            
+        # Update recording stats
+        if isRecording == True:
+            self.updateRecordingStats()
+
+        return img
 
     def drawTemp(self, img, temp):
         """

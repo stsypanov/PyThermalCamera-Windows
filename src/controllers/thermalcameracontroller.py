@@ -63,6 +63,7 @@ class ThermalCameraController:
         print(f'{KEY_RECORD} {KEY_STOP}: Record and Stop')
         print(f'{KEY_SNAPSHOT} : Snapshot')
         print(f'{KEY_CYCLE_THROUGH_COLORMAPS} : Cycle through ColorMaps')
+        print(f'{KEY_INVERT} : Invert ColorMap')
         print(f'{KEY_TOGGLE_HUD} : Toggle HUD')
  
     @staticmethod
@@ -74,40 +75,6 @@ class ThermalCameraController:
         print('https://youtube.com/leslaboratory')
         print('Fork Author: Riley Meyerkorth 17 January 2025')
         print('A Python program to read, parse and display thermal data from the Topdon TC001 and TS001 Thermal cameras!\n')
-
-    def _drawGUI(self, imdata):
-        """
-        Draws the GUI elements on the thermal image.
-        """
-        # Apply affects
-        img = self._guiController.applyEffects(imdata=imdata)
-
-        # Apply colormap
-        img = self._guiController.applyColormap(img)
-
-        # Draw crosshairs
-        img = self._guiController.drawCrosshairs(img)
-        
-        # Draw temp
-        img = self._guiController.drawTemp(img, temp=self._temp)
-
-        # Draw HUD
-        if self._guiController.isHudVisible == True:
-            img = self._guiController.drawHUD(img, self._avgTemp, self._isRecording)
-        
-        # Display floating max temp
-        if self._maxTemp > self._avgTemp + self._guiController.threshold:
-            img = self._guiController.drawMaxTemp(img, self._mrow, self._mcol, self._maxTemp)
-
-        # Display floating min temp
-        if self._minTemp < self._avgTemp - self._guiController.threshold:
-            img = self._guiController.drawMinTemp(img, self._lrow, self._lcol, self._minTemp)
-            
-        # Update recording stats
-        if self._isRecording == True:
-            self._guiController.updateRecordingStats()
-
-        return img
     
     def _checkForKeyPress(self, keyPress: int, img):
         """
@@ -183,6 +150,9 @@ class ThermalCameraController:
                 self._guiController.colormap = Colormap.NONE
             else:
                 self._guiController.colormap = Colormap(self._guiController.colormap.value + 1)
+        if keyPress == ord(KEY_INVERT): # Cycle through color maps
+            self._guiController.isInverted = not self._guiController.isInverted
+            
         
         ### RECORDING/MEDIA CONTROLS
         if keyPress == ord(KEY_RECORD) and self._isRecording == False: # Start reording
@@ -317,7 +287,17 @@ class ThermalCameraController:
                 self._avgTemp = self.calculateAverageTemperature(thdata)
                 
                 # Draw GUI elements
-                heatmap = self._drawGUI(imdata=imdata)
+                heatmap = self._guiController.drawGUI(
+                    imdata=imdata,
+                    temp=self._temp,
+                    maxTemp=self._maxTemp,
+                    minTemp=self._minTemp,
+                    averageTemp=self._avgTemp,
+                    isRecording=self._isRecording,
+                    mcol=self._mcol,
+                    mrow=self._mrow,
+                    lcol=self._lcol,
+                    lrow=self._lrow)
 
                 # Check for recording
                 if self._isRecording == True:
