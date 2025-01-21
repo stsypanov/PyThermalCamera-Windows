@@ -46,6 +46,7 @@ The following features have been implemented:
 - Floating Maximum and Minimum temperature values within the scene, with variable threshold.
 - Video recording is implemented (saved as AVI in the working directory).
 - Snapshot images are implemented (saved as PNG in the working directory).
+- Invert the colormap (essentially double the color themes!)
 
 The current settings are displayed in a box at the top left of the screen (The HUD):
 
@@ -94,7 +95,8 @@ These keybindings can be changed easily in the `defaults/keybinds.py` file.
 - f v: Contrast
 - e w: Fullscreen Windowed. (Note: Going back to windowed does not seem to work on the Pi!)
 - r t: Record and Stop
-- m : Cycle through ColorMaps
+- m : Cycle through colormaps
+- i : Invert the colormap
 - h : Toggle HUD
 - q : Quit the program
 

@@ -155,7 +155,7 @@ class GuiController:
         cv2.rectangle(
             img, 
             (0, 0),
-            (160, 120),
+            (160, 134),
             (0,0,0),
             -1)
         
@@ -250,6 +250,16 @@ class GuiController:
                 (40, 40, 255),
                 1,
                 cv2.LINE_AA)
+            
+        cv2.putText(
+            img,
+            'Inverted: '+str(self.isInverted),
+            (10, 126),
+            self._font,
+            0.4,
+            (0, 255, 255),
+            1,
+            cv2.LINE_AA)
             
         return img
     
