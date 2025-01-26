@@ -1,11 +1,11 @@
 import cv2, time, os
 import numpy as np
 
-from defaults.values import *
-from defaults.keybinds import *
+from src.defaults.values import *
+from src.defaults.keybinds import *
 
-from enums.ColormapEnum import Colormap
-from controllers.guiController import GuiController
+from src.enums.ColormapEnum import Colormap
+from src.controllers.guiController import GuiController
 
 class ThermalCameraController:
     def __init__(self, 
@@ -65,7 +65,8 @@ class ThermalCameraController:
         print(f'{KEY_CYCLE_THROUGH_COLORMAPS} : Cycle through ColorMaps')
         print(f'{KEY_INVERT} : Invert ColorMap')
         print(f'{KEY_TOGGLE_HUD} : Toggle HUD')
- 
+        print(f'{KEY_QUIT} : Quit')
+
     @staticmethod
     def printCredits():
         """
