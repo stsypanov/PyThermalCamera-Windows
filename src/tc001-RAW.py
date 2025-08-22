@@ -7,7 +7,7 @@ from helpers.deviceHelper import getDevices
 parser = argparse.ArgumentParser()
 parser.add_argument("--device", type=int, default=0, help=f"VideoDevice index. Currently selectable: {getDevices()}")
 args = parser.parse_args()
-	
+
 # Check if device specified
 if args.device:
 	dev = args.device
@@ -34,6 +34,6 @@ while(cap.isOpened()):
 		# Quit/exit signal
 		keyPress = cv2.waitKey(3)
 		if keyPress == ord('q'):
-			break
-			capture.release()
+			cap.release()
 			cv2.destroyAllWindows()
+			break
