@@ -17,7 +17,7 @@ args = parser.parse_args()
 
 def main():
     # Check for devices
-    if args.device:
+    if args.device is not None:
         dev = args.device
     else:
         dev = VIDEO_DEVICE_INDEX
