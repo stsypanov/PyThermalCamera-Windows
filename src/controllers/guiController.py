@@ -340,7 +340,7 @@ class GuiController:
         """
         Applies the selected colormap to the image data.
         """
-        match Colormap(self.colormap):
+        match Colormap(self.colormap.value):
             case Colormap.JET:
                 img = cv2.applyColorMap(img, cv2.COLORMAP_JET)
             case Colormap.HOT:
